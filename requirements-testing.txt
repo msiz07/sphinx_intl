@@ -2,3 +2,4 @@ tox
 pytest
 docutils
 flake8
+mypy
