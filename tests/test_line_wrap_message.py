@@ -113,17 +113,22 @@ def test_write_updated_catalog(
 ):
     # from sphinx_intl import catalog
     # XXX, read_po will be replaced by new function
-    cat_updated_pot = pofile.read_po(line_wrap_updated_pot_bytesio)
-    cat_po_ja = pofile.read_po(line_wrap_po_ja_bytesio)
+    # cat_updated_pot = pofile.read_po(line_wrap_updated_pot_bytesio)
+    # cat_po_ja = pofile.read_po(line_wrap_po_ja_bytesio)
+    cat_updated_pot = catalog._read_po_stream(
+        line_wrap_updated_pot_bytesio, "utf-8"
+    )
+    cat_po_ja = catalog._read_po_stream(line_wrap_po_ja_bytesio, "utf-8")
 
-    cat_po_ja.update(cat_updated_pot)
+    # cat_po_ja.update(cat_updated_pot)
+    catalog.update_with_fuzzy(cat_po_ja, cat_updated_pot)
 
     po_bout = io.BytesIO()
     # XXX, write_po will be replaced by new function
     # pofile.write_po(po_bout, cat_po_ja)
-    pofile.write_po(po_bout, cat_po_ja, include_previous=True)
-    po_bout.seek(0)
-    updated_po = po_bout.read().decode("utf-8")
+    # pofile.write_po(po_bout, cat_po_ja, include_previous=True)
+    catalog._write_po_stream(po_bout, cat_po_ja)
+    updated_po = po_bout.getvalue().decode("utf-8")
 
     # line_wrap_po_ja_bytesio.seek(0)
     # original_po = line_wrap_po_ja_bytesio.read().decode("utf-8")
