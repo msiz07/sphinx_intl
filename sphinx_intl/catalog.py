@@ -318,6 +318,9 @@ def update_with_fuzzy(catalog: Catalog, catalog_source: Catalog) -> None:
     :param catalog_source: catalog object as a template to update 'catalog'
     :return: None
     """
+
+    # to use PO format msgstr of messages later, save them if possible before
+    # updating catalog
     po_msgstr = dict()
     for orig_msg in catalog:
         # import pdb; pdb.set_trace()
@@ -326,11 +329,11 @@ def update_with_fuzzy(catalog: Catalog, catalog_source: Catalog) -> None:
 
     catalog.update(catalog_source)
 
-    tmp_catalog: Catalog = Catalog()
-    for new_msg in catalog:
-        tmp_catalog[new_msg.id] = new_msg
-
-    for new_msg in tmp_catalog:
+    # For fuzzy entries, ``catalog.update()`` use babel message class which
+    # does not keep PO format msgstr. Replace them with SphinxIntlMessage
+    # to have PO format msgstr.
+    msg_list: list[Message] = [msg for msg in catalog]
+    for new_msg in msg_list:
         # import pdb; pdb.set_trace()
         if isinstance(new_msg.id, str) and new_msg.id in po_msgstr:
             update_msg = SphinxIntlMessage.copy_from_babel_message(new_msg)
