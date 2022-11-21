@@ -19,8 +19,8 @@ class SphinxIntlMessage(Message):
     def get_po_format_translation(self) -> str:
         return self._po_format_translation
 
-    def set_po_format_translation(self, normalized_translation) -> None:
-        self._po_format_translation = normalized_translation
+    def set_po_format_translation(self, po_format_translation) -> None:
+        self._po_format_translation = po_format_translation
 
     @classmethod
     def copy_from_babel_message(cls, message: Message):
@@ -138,13 +138,12 @@ class SphinxIntlPoFileWriter:
                 if line.startswith(b'"'):
                     self._process_msgid(line)
                     continue
-                elif re.search(b"^(msgctxt|#)", line):
+                elif re.search(b"^(msgstr|msgctxt|#)", line):
                     self._end_msgid(ret_bytesio)
-                elif line.startswith(b"msgstr"):
-                    self._end_msgid(ret_bytesio)
-                    self._start_msgstr(line)
-                    continue
-                    # import pdb; pdb.set_trace()
+                    if line.startswith(b"msgstr"):
+                        self._start_msgstr(line)
+                        continue
+                        # import pdb; pdb.set_trace()
                 else:
                     raise PoFileParseError("error in parsing msgid")
             else:  # self._in_msgstr is True
@@ -166,7 +165,7 @@ class SphinxIntlPoFileWriter:
             if self._in_msgid:
                 self._end_msgid(ret_bytesio)
             elif self._in_msgstr:
-                self._end_msgstr(ret_bytesio)
+                self._end_msgstr(ret_bytesio, is_last=True)
 
         ret_bytesio.seek(0)
         return ret_bytesio
@@ -196,10 +195,14 @@ class SphinxIntlPoFileWriter:
         self._cur_msgstr_po_lines += line
         pass
 
-    def _end_msgstr(self, out_bytesio: io.BufferedIOBase):
-        cur_msgstr = self._cur_msgstr_po_lines.decode(self.catalog.charset)
-        cur_msgstr = re.sub(r"^msgstr\s+", "", cur_msgstr)
-        self._cur_msgstr = pofile.denormalize(cur_msgstr)
+    def _end_msgstr(
+        self, out_bytesio: io.BufferedIOBase, is_last: bool = False
+    ):
+        # cur_msgstr = self._cur_msgstr_po_lines.decode(self.catalog.charset)
+        cur_msgstr = re.sub(rb"^msgstr\s+", b"", self._cur_msgstr_po_lines)
+        self._cur_msgstr = pofile.denormalize(
+            cur_msgstr.decode(self.catalog.charset)
+        )
         self._in_msgstr = False
 
         po_format_msgstr = self._cur_msgstr_po_lines
@@ -215,9 +218,12 @@ class SphinxIntlPoFileWriter:
             ).group(0)
             po_format_msgstr = (
                 "msgstr " + cur_msg.get_po_format_translation()
-            ).encode(self.catalog.charset)
+            ).strip().encode(self.catalog.charset)
             out_bytesio.write(po_format_msgstr)
             out_bytesio.write(trailing_lines)
+            if not is_last:
+                out_bytesio.write(b"\n")
+            # import pdb; pdb.set_trace()
         else:
             out_bytesio.write(self._cur_msgstr_po_lines)
 

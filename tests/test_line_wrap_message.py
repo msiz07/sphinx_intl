@@ -83,6 +83,28 @@ def test_update_catalog(
     # assert False
 
 
+def test_read_write_pofile_without_change(line_wrap_po_ja_bytesio):
+    orig_pofile_bytes = line_wrap_po_ja_bytesio.getvalue()
+
+    cat = catalog._read_po_stream(line_wrap_po_ja_bytesio, "utf-8")
+
+    tmp_bytesio = io.BytesIO()
+    catalog._write_po_stream(tmp_bytesio, cat)
+    written_pofile_bytes = tmp_bytesio.getvalue()
+
+    assert (
+        orig_pofile_bytes.decode("utf-8") ==
+        written_pofile_bytes.decode("utf-8")
+    ), (
+        "\n***** orig_pofile *****:\n"
+        f"{orig_pofile_bytes.decode('utf-8')}"
+        "\n--------------------------------------------------\n"
+        "\n***** written_pofile *****:\n"
+        f"{written_pofile_bytes.decode('utf-8')}"
+        "\n--------------------------------------------------\n"
+    )
+
+
 def test_keep_normalized_string(line_wrap_po_ja_bytesio):
     # from sphinx_intl import catalog
     # XXX, read_po will be replaced by new function
@@ -136,11 +158,13 @@ def test_write_updated_catalog(
 
     expected_msg_entry = (
         'msgid ""\n'
-        '{0}'
+        '{0}\n'
         'msgstr ""\n'
-        '{1}'
+        '{1}\n'
+        '\n'
     ).format(
-        line_wrap_pofile_msgid.replace(".", "!"), line_wrap_pofile_msgtr
+        line_wrap_pofile_msgid.replace(".", "!").strip(),
+        line_wrap_pofile_msgtr.strip(),
     )
 
     assert (
@@ -151,6 +175,7 @@ def test_write_updated_catalog(
         "\n--------------------------------------------------\n"
         "\n***** updated_po *****:\n"
         f"{updated_po}"
+        "\n--------------------------------------------------\n"
     )
 
 
@@ -181,7 +206,7 @@ def line_wrap_po_ja_bytesio():
     bytes_io = io.BytesIO()
     bytes_io.write(
         line_wrap_pot.format(
-            line_wrap_pofile_msgid, line_wrap_pofile_msgtr
+            line_wrap_pofile_msgid.strip(), line_wrap_pofile_msgtr.strip()
         ).encode("utf-8")
     )
     bytes_io.seek(0)
@@ -198,8 +223,7 @@ line_wrap_pofile_msgtr = """\
 "もしももっと賢くなってほしかったら、もっとおとぎ話を読んであげましょう。"
 """
 
-line_wrap_pot = r"""
-# Japanese translations for PROJECT.
+line_wrap_pot = r"""# Japanese translations for PROJECT.
 # Copyright (C) 2022 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
@@ -219,11 +243,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.11.0\n"
 
+#: file1:1 file1:2 file2:3
+msgid ""
+"first entry.\n"
+"The quick brown fox jumps over lazy dog."
+msgstr ""
+"最初のエントリー。\n"
+"素早い茶色の狐はのろまな犬を飛び越える。"
+
 #: line_wrap_message.txt:1 line_wrap_message.txt:5
 msgid ""
 {0}
 msgstr ""
 {1}
+
+#: file1:4 file1:5 file2:6
+msgid ""
+"last entry.\n"
+"The quick brown fox jumped over the lazy dogs. 1234567890."
+msgstr ""
+"最後のエントリー。\n"
+"素早い茶色の狐はのろまな犬どもを飛び越えた。１２３４５６７８９０。"
 """
 
 # line_wrap_po_ja =  f"""\
