@@ -22,7 +22,9 @@ def get_lang_dirs(path):
 # ==================================
 # commands
 
-def update(locale_dir, pot_dir, languages, line_width=76):
+def update(
+    locale_dir, pot_dir, languages, line_width=76, update_project_field=False
+):
     """
     Update specified language's po files from pot.
 
@@ -61,10 +63,22 @@ def update(locale_dir, pot_dir, languages, line_width=76):
                         status['update'] += 1
                         click.echo('Update: {0} +{1}, -{2}'.format(
                             po_file, len(added), len(deleted)))
+                        if update_project_field:
+                            cat.project = cat_pot.project
+                            cat.version = cat_pot.version
                         c.dump_po(po_file, cat, line_width)
                     else:
                         status['notchanged'] += 1
                         click.echo('Not Changed: {0}'.format(po_file))
+                        if (
+                            update_project_field and (
+                                (cat.project != cat_pot.project) or
+                                (cat.version != cat_pot.version)
+                            )
+                        ):
+                            cat.project = cat_pot.project
+                            cat.version = cat_pot.version
+                            c.dump_po(po_file, cat, line_width)
                 else:  # new po file
                     status['create'] += 1
                     click.echo('Create: {0}'.format(po_file))
