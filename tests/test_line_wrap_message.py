@@ -8,9 +8,6 @@ from sphinx_intl import catalog
 
 
 def test_read_pot_bytesio(line_wrap_pot_bytesio):
-    # from sphinx_intl import catalog
-    # XXX, read_po will be replaced by new function
-    # cat = pofile.read_po(line_wrap_pot_bytesio)
     cat = catalog._read_po_stream(line_wrap_pot_bytesio, "utf-8")
 
     included_msgid = "".join([
@@ -25,9 +22,6 @@ def test_read_pot_bytesio(line_wrap_pot_bytesio):
 
 
 def test_read_po_ja_bytesio(line_wrap_po_ja_bytesio):
-    # from sphinx_intl import catalog
-    # XXX, read_po will be replaced by new function
-    # cat = pofile.read_po(line_wrap_pot_bytesio)
     cat = catalog._read_po_stream(line_wrap_po_ja_bytesio, "utf-8")
 
     included_msgid = "".join([
@@ -50,14 +44,11 @@ def test_read_po_ja_bytesio(line_wrap_po_ja_bytesio):
     assert isinstance(msg, catalog.SphinxIntlMessage), (
         f"type(msg): {type(msg)}"
     )
-    # assert msg.get_normalized_translation() == line_wrap_pofile_msgtr
 
 
 def test_update_catalog(
     line_wrap_updated_pot_bytesio, line_wrap_po_ja_bytesio
 ):
-    # from sphinx_intl import catalog
-    # XXX, read_po will be replaced by new function
     cat_updated_pot = pofile.read_po(line_wrap_updated_pot_bytesio)
     cat_po_ja = pofile.read_po(line_wrap_po_ja_bytesio)
 
@@ -80,7 +71,6 @@ def test_update_catalog(
     assert expected_msgid not in prev_msgid_list
     assert expected_previous_msgid not in msgid_list
     assert expected_previous_msgid in prev_msgid_list
-    # assert False
 
 
 def test_read_write_pofile_without_change(line_wrap_po_ja_bytesio):
@@ -105,10 +95,7 @@ def test_read_write_pofile_without_change(line_wrap_po_ja_bytesio):
     )
 
 
-def test_keep_normalized_string(line_wrap_po_ja_bytesio):
-    # from sphinx_intl import catalog
-    # XXX, read_po will be replaced by new function
-    # cat_po_ja = pofile.read_po(line_wrap_po_ja_bytesio)
+def test_keep_po_format_string(line_wrap_po_ja_bytesio):
     cat_po_ja = catalog._read_po_stream(line_wrap_po_ja_bytesio, "utf-8")
 
     included_msgid = "".join([
@@ -123,7 +110,7 @@ def test_keep_normalized_string(line_wrap_po_ja_bytesio):
     assert msg.get_po_format_translation() == (
         '""\n' + line_wrap_pofile_msgtr
     ).strip(), (
-        "##### msg.get_normalized_translation() #####\n"
+        "##### msg.po_format_translation() #####\n"
         f"{msg.get_po_format_translation()}\n"
         "##### line_wrap_pofile_msgstr #####\n"
         f'""\n{line_wrap_pofile_msgtr}'
@@ -133,28 +120,16 @@ def test_keep_normalized_string(line_wrap_po_ja_bytesio):
 def test_write_updated_catalog(
     line_wrap_updated_pot_bytesio, line_wrap_po_ja_bytesio
 ):
-    # from sphinx_intl import catalog
-    # XXX, read_po will be replaced by new function
-    # cat_updated_pot = pofile.read_po(line_wrap_updated_pot_bytesio)
-    # cat_po_ja = pofile.read_po(line_wrap_po_ja_bytesio)
     cat_updated_pot = catalog._read_po_stream(
         line_wrap_updated_pot_bytesio, "utf-8"
     )
     cat_po_ja = catalog._read_po_stream(line_wrap_po_ja_bytesio, "utf-8")
 
-    # cat_po_ja.update(cat_updated_pot)
     catalog.update_with_fuzzy(cat_po_ja, cat_updated_pot)
 
     po_bout = io.BytesIO()
-    # XXX, write_po will be replaced by new function
-    # pofile.write_po(po_bout, cat_po_ja)
-    # pofile.write_po(po_bout, cat_po_ja, include_previous=True)
     catalog._write_po_stream(po_bout, cat_po_ja)
     updated_po = po_bout.getvalue().decode("utf-8")
-
-    # line_wrap_po_ja_bytesio.seek(0)
-    # original_po = line_wrap_po_ja_bytesio.read().decode("utf-8")
-    # assert updated_po == original_po
 
     expected_msg_entry = (
         'msgid ""\n'
@@ -265,8 +240,3 @@ msgstr ""
 "最後のエントリー。\n"
 "素早い茶色の狐はのろまな犬どもを飛び越えた。１２３４５６７８９０。"
 """
-
-# line_wrap_po_ja =  f"""\
-# {line_wrap_pot}
-# {line_wrap_pofile_msgtr}
-# """

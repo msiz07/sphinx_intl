@@ -66,8 +66,8 @@ class SphinxIntlPoFileParser(pofile.PoFileParser):
         sphinx_intl_message.set_po_format_translation(
             po_format_translated_string
         )
-        # import pdb; pdb.set_trace()
-        # babel catalog do not replace message instance by catalog.__setitem__
+        # babel catalog does not replace message instance by
+        # catalog.__setitem__() when the message already exists.
         self.catalog.delete(msgid)
         self.catalog[msgid] = sphinx_intl_message
 
@@ -87,7 +87,6 @@ class SphinxIntlPoFileWriter:
     def write_po(self, fileobj: io.BufferedIOBase) -> None:
         _babel_output_bytes = io.BytesIO()
 
-        # pofile.write_po(fileobj, catalog, self.line_width)
         pofile.write_po(
             _babel_output_bytes,
             self.catalog,
@@ -100,7 +99,6 @@ class SphinxIntlPoFileWriter:
         )
         _updated_output_bytes.seek(0)
         fileobj.write(_updated_output_bytes.read())
-        # fileobj.write(_babel_output_bytes.read())
 
     def _update_to_line_wrapped_translations(
         self,
@@ -125,7 +123,6 @@ class SphinxIntlPoFileWriter:
         """
         ret_bytesio = io.BytesIO()
         for line in babel_bytesio.readlines():
-            # ret_bytesio.write(line)
             if (not self._in_msgid) and (not self._in_msgstr):
                 if line.startswith(b"msgid"):
                     self._start_msgid(line)
@@ -133,7 +130,6 @@ class SphinxIntlPoFileWriter:
                 if line.startswith(b"msgstr"):
                     self._start_msgstr(line)
                     continue
-                # ret_bytesio.write(line)
             elif self._in_msgid:  # self._in_msgid is True
                 if line.startswith(b'"'):
                     self._process_msgid(line)
@@ -143,11 +139,9 @@ class SphinxIntlPoFileWriter:
                     if line.startswith(b"msgstr"):
                         self._start_msgstr(line)
                         continue
-                        # import pdb; pdb.set_trace()
                 else:
                     raise PoFileParseError("error in parsing msgid")
             else:  # self._in_msgstr is True
-                # import pdb; pdb.set_trace()
                 if re.search(br'(^"|^\s*$)', line):
                     self._process_msgstr(line)
                     continue
@@ -198,7 +192,6 @@ class SphinxIntlPoFileWriter:
     def _end_msgstr(
         self, out_bytesio: io.BufferedIOBase, is_last: bool = False
     ):
-        # cur_msgstr = self._cur_msgstr_po_lines.decode(self.catalog.charset)
         cur_msgstr = re.sub(rb"^msgstr\s+", b"", self._cur_msgstr_po_lines)
         self._cur_msgstr = pofile.denormalize(
             cur_msgstr.decode(self.catalog.charset)
@@ -223,20 +216,11 @@ class SphinxIntlPoFileWriter:
             out_bytesio.write(trailing_lines)
             if not is_last:
                 out_bytesio.write(b"\n")
-            # import pdb; pdb.set_trace()
         else:
             out_bytesio.write(self._cur_msgstr_po_lines)
 
-        # if po_format_msgstr != self._cur_msgstr_po_lines:  # debug
-        #     import pdb; pdb.set_trace()
-
 
 def _read_po_stream(fileobj: io.TextIOBase, charset: str) -> Catalog:
-
-    # To decode lines by babel, read po file as binary mode and specify charset for
-    # read_po function.
-    # with io.open(filename, 'rb') as f:  # FIXME: encoding VS charset
-    #     return pofile.read_po(f, charset=charset)
     catalog = Catalog(charset=charset)
     parser = SphinxIntlPoFileParser(
         catalog, ignore_obsolete=False, abort_invalid=False,
@@ -323,7 +307,6 @@ def update_with_fuzzy(catalog: Catalog, catalog_source: Catalog) -> None:
     # updating catalog
     po_msgstr = dict()
     for orig_msg in catalog:
-        # import pdb; pdb.set_trace()
         if isinstance(orig_msg, SphinxIntlMessage):
             po_msgstr[orig_msg.id] = orig_msg.get_po_format_translation()
 
@@ -334,7 +317,6 @@ def update_with_fuzzy(catalog: Catalog, catalog_source: Catalog) -> None:
     # to have PO format msgstr.
     msg_list: list[Message] = [msg for msg in catalog]
     for new_msg in msg_list:
-        # import pdb; pdb.set_trace()
         if isinstance(new_msg.id, str) and new_msg.id in po_msgstr:
             update_msg = SphinxIntlMessage.copy_from_babel_message(new_msg)
             update_msg.set_po_format_translation(po_msgstr[new_msg.id])
