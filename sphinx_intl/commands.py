@@ -130,6 +130,12 @@ option_line_width = click.option(
     help='The maximum line width for the po files, 0 or a negative number '
          'disable line wrapping')
 
+option_update_project_field = click.option(
+    '-up', '--update-project-field',
+    is_flag=True, default=False, show_default=True,
+    help='The flag whether to update catalog project field by '
+         '"catalog_source" (typically ".pot" files)')
+
 option_transifex_token = click.option(
     '--transifex-token',
     envvar=ENVVAR_PREFIX + '_TRANSIFEX_TOKEN',
@@ -234,7 +240,8 @@ def main(ctx, config, tag):
 @option_pot_dir
 @option_language
 @option_line_width
-def update(locale_dir, pot_dir, language, line_width):
+@option_update_project_field
+def update(locale_dir, pot_dir, language, line_width, update_project_field):
     """
     Update specified language's po files from pot.
 
@@ -260,7 +267,9 @@ def update(locale_dir, pot_dir, language, line_width):
                % locals())
         raise click.BadParameter(msg, param_hint='language')
 
-    basic.update(locale_dir, pot_dir, languages, line_width)
+    basic.update(
+        locale_dir, pot_dir, languages, line_width, update_project_field
+    )
 
 
 @main.command()
